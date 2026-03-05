@@ -131,7 +131,6 @@ export default function PlotScene({ filter, onPlotClick, zoomPlot, nightMode }) 
 
     // Clubhouse
     const bldColor = nightMode ? 0x111100 : 0xf5e6c8;
-    const bldAccent = nightMode ? 0x1a1500 : 0xd4a800;
     const clubBase=new THREE.Mesh(new THREE.BoxGeometry(50,16,35),new THREE.MeshLambertMaterial({color:bldColor}));
     clubBase.position.set(-60,8,65); clubBase.castShadow=true; scene.add(clubBase);
     const clubRoof=new THREE.Mesh(new THREE.ConeGeometry(34,12,4),new THREE.MeshLambertMaterial({color:nightMode?0x1a1500:0xcc8800}));
@@ -260,7 +259,7 @@ export default function PlotScene({ filter, onPlotClick, zoomPlot, nightMode }) 
       if(el.contains(renderer.domElement))el.removeChild(renderer.domElement);
       renderer.dispose();
     };
-  },[nightMode,filter]);
+  },[nightMode,filter,onPlotClick]);
 
   return <div ref={mountRef} style={{width:"100%",height:"100%",cursor:"crosshair"}}/>;
 }

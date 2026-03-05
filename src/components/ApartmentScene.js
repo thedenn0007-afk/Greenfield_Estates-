@@ -205,7 +205,7 @@ export default function ApartmentScene({ selectedFloor, onFloorClick, nightMode 
       if(el.contains(renderer.domElement))el.removeChild(renderer.domElement);
       renderer.dispose();
     };
-  },[nightMode,selectedFloor]);
+  },[nightMode,selectedFloor,onFloorClick]);
 
   return <div ref={mountRef} style={{width:"100%",height:"100%",cursor:"crosshair"}}/>;
 }

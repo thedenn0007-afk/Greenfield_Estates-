@@ -422,7 +422,7 @@ export default function App() {
                         <div style={{marginLeft:"auto",display:"flex",gap:4,flexWrap:"wrap"}}>
                           {selectedApt.rooms.map(r=>(
                             <button key={r.id} onClick={()=>setSelectedRoom(r)} style={{
-                              padding:"4px 10px",borderRadius:20,border:"none",cursor:"pointer",
+                              padding:"4px 10px",borderRadius:20,cursor:"pointer",
                               fontFamily:"'Montserrat',sans-serif",fontWeight:600,fontSize:9,letterSpacing:"0.1em",
                               background:selectedRoom.id===r.id?gradGold:T.cardBg,
                               color:selectedRoom.id===r.id?"#0a0800":T.textMuted,

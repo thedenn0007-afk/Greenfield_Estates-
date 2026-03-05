@@ -126,11 +126,21 @@ export default function RoomScene({ room, nightMode }) {
 
     const lastMouse = {x:0, y:0};
     const onMouseDown=(e)=>{lastMouse.x=e.clientX; lastMouse.y=e.clientY;};
+    const onTouchStart=(e)=>{const touch=e.touches[0];lastMouse.x=touch.clientX; lastMouse.y=touch.clientY;};
     const onMouseMove=(e)=>{
       if(e.buttons===1){
         camRef.current.theta-=(e.clientX-lastMouse.x)*0.004;
         camRef.current.phi=Math.max(-0.8,Math.min(0.8,camRef.current.phi-(e.clientY-lastMouse.y)*0.004));
         lastMouse.x=e.clientX; lastMouse.y=e.clientY; updateCamera();
+      }
+    };
+    const onTouchMove=(e)=>{
+      e.preventDefault();
+      if(e.touches.length===1){
+        const touch=e.touches[0];
+        camRef.current.theta-=(touch.clientX-lastMouse.x)*0.004;
+        camRef.current.phi=Math.max(-0.8,Math.min(0.8,camRef.current.phi-(touch.clientY-lastMouse.y)*0.004));
+        lastMouse.x=touch.clientX; lastMouse.y=touch.clientY; updateCamera();
       }
     };
     const onKeyDown=(e)=>{keysRef.current[e.key.toLowerCase()]=true;};
@@ -143,7 +153,10 @@ export default function RoomScene({ room, nightMode }) {
       setHoveredFurniture(hits.length>0?hits[0].object.userData.label:null);
     };
 
-    el.addEventListener("mousedown",onMouseDown); window.addEventListener("mousemove",onMouseMove);
+    el.addEventListener("mousedown",onMouseDown); 
+    el.addEventListener("touchstart",onTouchStart,{passive:true});
+    window.addEventListener("mousemove",onMouseMove);
+    window.addEventListener("touchmove",onTouchMove,{passive:false});
     el.addEventListener("click",onClick); window.addEventListener("keydown",onKeyDown); window.addEventListener("keyup",onKeyUp);
 
     const animate=()=>{
@@ -165,7 +178,10 @@ export default function RoomScene({ room, nightMode }) {
 
     return()=>{
       cancelAnimationFrame(frameRef.current);
-      el.removeEventListener("mousedown",onMouseDown); window.removeEventListener("mousemove",onMouseMove);
+      el.removeEventListener("mousedown",onMouseDown); 
+      el.removeEventListener("touchstart",onTouchStart);
+      window.removeEventListener("mousemove",onMouseMove);
+      window.removeEventListener("touchmove",onTouchMove);
       el.removeEventListener("click",onClick); window.removeEventListener("keydown",onKeyDown); window.removeEventListener("keyup",onKeyUp);
       window.removeEventListener("resize",onResize);
       if(el.contains(renderer.domElement))el.removeChild(renderer.domElement);

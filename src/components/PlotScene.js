@@ -208,12 +208,23 @@ export default function PlotScene({ filter, onPlotClick, zoomPlot, nightMode }) 
     updateCamera();
 
     const onMouseDown=(e)=>{isDraggingRef.current=false;lastMouseRef.current={x:e.clientX,y:e.clientY};};
+    const onTouchStart=(e)=>{isDraggingRef.current=false;const touch=e.touches[0];lastMouseRef.current={x:touch.clientX,y:touch.clientY};};
     const onMouseMove=(e)=>{
       if(e.buttons===1){
         isDraggingRef.current=true;
         camRef.current.theta-=(e.clientX-lastMouseRef.current.x)*0.005;
         camRef.current.phi=Math.max(0.18,Math.min(1.45,camRef.current.phi+(e.clientY-lastMouseRef.current.y)*0.005));
         lastMouseRef.current={x:e.clientX,y:e.clientY}; updateCamera();
+      }
+    };
+    const onTouchMove=(e)=>{
+      e.preventDefault();
+      if(e.touches.length===1){
+        isDraggingRef.current=true;
+        const touch=e.touches[0];
+        camRef.current.theta-=(touch.clientX-lastMouseRef.current.x)*0.005;
+        camRef.current.phi=Math.max(0.18,Math.min(1.45,camRef.current.phi+(touch.clientY-lastMouseRef.current.y)*0.005));
+        lastMouseRef.current={x:touch.clientX,y:touch.clientY}; updateCamera();
       }
     };
     const onWheel=(e)=>{camRef.current.radius=Math.max(50,Math.min(650,camRef.current.radius+e.deltaY*0.35));updateCamera();};
@@ -228,7 +239,10 @@ export default function PlotScene({ filter, onPlotClick, zoomPlot, nightMode }) 
     const onKeyDown=(e)=>{keysRef.current[e.key.toLowerCase()]=true;};
     const onKeyUp=(e)=>{keysRef.current[e.key.toLowerCase()]=false;};
 
-    el.addEventListener("mousedown",onMouseDown); window.addEventListener("mousemove",onMouseMove);
+    el.addEventListener("mousedown",onMouseDown); 
+    el.addEventListener("touchstart",onTouchStart,{passive:true});
+    window.addEventListener("mousemove",onMouseMove);
+    window.addEventListener("touchmove",onTouchMove,{passive:false});
     el.addEventListener("wheel",onWheel); el.addEventListener("click",onClick);
     window.addEventListener("keydown",onKeyDown); window.addEventListener("keyup",onKeyUp);
 
@@ -252,7 +266,10 @@ export default function PlotScene({ filter, onPlotClick, zoomPlot, nightMode }) 
 
     return()=>{
       cancelAnimationFrame(frameRef.current);
-      el.removeEventListener("mousedown",onMouseDown); window.removeEventListener("mousemove",onMouseMove);
+      el.removeEventListener("mousedown",onMouseDown); 
+      el.removeEventListener("touchstart",onTouchStart);
+      window.removeEventListener("mousemove",onMouseMove);
+      window.removeEventListener("touchmove",onTouchMove);
       el.removeEventListener("wheel",onWheel); el.removeEventListener("click",onClick);
       window.removeEventListener("keydown",onKeyDown); window.removeEventListener("keyup",onKeyUp);
       window.removeEventListener("resize",onResize);

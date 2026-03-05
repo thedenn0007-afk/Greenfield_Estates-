@@ -8,7 +8,7 @@ const ROOM_COLORS = {
   terrace:  { night:{ bg:"#00050a", border:"#4a8aaf", label:"#4a8aaf" }, day:{ bg:"#e0eff8", border:"#1a6699", label:"#0a4466" } },
   bathroom: { night:{ bg:"#0a0a0a", border:"#888888", label:"#888888" }, day:{ bg:"#f4f4f4", border:"#666666", label:"#444444" } },
 };
-const CELL=64;
+const CELL=window.innerWidth<=768?52:64;
 
 export default function FloorPlan({ apartment, selectedRoom, onRoomClick, nightMode }) {
   if(!apartment) return null;
@@ -18,7 +18,7 @@ export default function FloorPlan({ apartment, selectedRoom, onRoomClick, nightM
   const mode=nightMode?"night":"day";
 
   return (
-    <div style={{width:"100%",overflowX:"auto",padding:"8px 0"}}>
+    <div style={{width:"100%",overflowX:"auto",padding:"8px 0",WebkitOverflowScrolling:"touch"}}>
       <div style={{display:"inline-block",position:"relative",width:W,height:H,background:nightMode?"#0a0800":"#f0e8d0",border:`2px solid #b8960c`,borderRadius:4,margin:"0 auto",boxShadow:nightMode?"0 0 40px rgba(184,150,12,0.15)":"0 4px 24px rgba(0,0,0,0.12)"}}>
         {/* Grid */}
         {Array.from({length:maxRow+1}).map((_,r)=>(<div key={r} style={{position:"absolute",left:0,right:0,top:r*CELL,height:1,background:nightMode?"rgba(184,150,12,0.08)":"rgba(160,120,8,0.12)",pointerEvents:"none"}}/>))}

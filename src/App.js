@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import PlotScene from "./components/PlotScene";
 import ApartmentScene from "./components/ApartmentScene";
 import RoomScene from "./components/RoomScene";
@@ -96,8 +96,20 @@ const SideLabel = ({ children, T }) => (
   }}>{children}</div>
 );
 
+// ─── MOBILE DETECTION ────────────────────────────────────────────────────────
+const useMobile = () => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  return isMobile;
+};
+
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function App() {
+  const isMobile = useMobile();
   const [activeTab, setActiveTab]         = useState("plots");
   const [nightMode, setNightMode]         = useState(true);
   const [plotFilter, setPlotFilter]       = useState("all");
@@ -112,6 +124,7 @@ export default function App() {
   const [bookModal, setBookModal]         = useState(null);
   const [bookingDone, setBookingDone]     = useState(false);
   const [enquiryForm, setEnquiryForm]     = useState({ name:"", phone:"", email:"" });
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   const T = nightMode ? DARK : LIGHT;
 
@@ -145,7 +158,7 @@ export default function App() {
   // Styles (theme-aware)
   const s = {
     app:{ width:"100vw",height:"100vh",background:T.bg,display:"flex",flexDirection:"column",fontFamily:"'Cormorant Garamond',Georgia,serif",color:T.text,overflow:"hidden",transition:"background 0.3s" },
-    header:{ height:60,background:T.headerBg,borderBottom:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 24px",flexShrink:0,position:"relative",zIndex:10 },
+    header:{ height:isMobile?50:60,background:T.headerBg,borderBottom:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 24px",flexShrink:0,position:"relative",zIndex:10 },
     headerLine:{ position:"absolute",bottom:0,left:0,right:0,height:1,background:`linear-gradient(90deg,transparent 0%,${T.borderGold} 30%,#d4af37 50%,${T.borderGold} 70%,transparent 100%)` },
     logoWrap:{ display:"flex",alignItems:"center",gap:14 },
     logoMark:{ width:36,height:36,borderRadius:"50%",border:`1.5px solid ${T.borderGold}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,background:nightMode?"#0a0800":"#1e1600",boxShadow:`0 0 12px rgba(184,150,12,0.25)` },
@@ -155,8 +168,13 @@ export default function App() {
     tab:(a)=>({ padding:"6px 20px",borderRadius:4,border:"none",cursor:"pointer",fontFamily:"'Montserrat',sans-serif",fontWeight:600,fontSize:11,letterSpacing:"0.12em",textTransform:"uppercase",background:a?gradGold:"transparent",color:a?"#0a0800":"rgba(212,175,55,0.65)",transition:"all 0.2s" }),
     headerRight:{ display:"flex",gap:8,alignItems:"center" },
     iconBtn:{ padding:"6px 14px",borderRadius:5,background:nightMode?"rgba(184,150,12,0.08)":"rgba(255,255,255,0.15)",border:`1px solid ${nightMode?T.border:"rgba(212,175,55,0.35)"}`,color:"rgba(212,175,55,0.85)",cursor:"pointer",fontFamily:"'Montserrat',sans-serif",fontSize:10,letterSpacing:"0.1em",transition:"all 0.2s" },
-    body:{ flex:1,display:"flex",overflow:"hidden" },
+    body:{ flex:1,display:"flex",overflow:"hidden",paddingBottom:isMobile?56:0 },
     sidebar:{ width:272,background:T.sidebarBg,borderRight:`1px solid ${T.border}`,display:"flex",flexDirection:"column",overflowY:"auto",flexShrink:0,padding:"0 0 12px",transition:"background 0.3s" },
+    mobileDrawer:{ position:"fixed",bottom:0,left:0,right:0,height:"72vh",background:T.sidebarBg,borderTop:`1px solid ${T.border}`,borderRadius:"16px 16px 0 0",transform:mobileDrawerOpen?"translateY(0)":"translateY(100%)",transition:"transform 0.3s ease",zIndex:60,overflowY:"auto",padding:"0 0 12px" },
+    drawerBackdrop:{ position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:55,opacity:mobileDrawerOpen?1:0,pointerEvents:mobileDrawerOpen?"auto":"none",transition:"opacity 0.3s ease" },
+    drawerHandle:{ width:40,height:4,background:T.border,borderRadius:2,margin:"8px auto 16px" },
+    bottomTabs:{ position:"fixed",bottom:0,left:0,right:0,height:56,background:T.headerBg,borderTop:`1px solid ${T.border}`,display:isMobile?"flex":"none",zIndex:50 },
+    bottomTab:(active)=>({ flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,cursor:"pointer",borderTop:active?`2px solid ${T.borderGold}`:"none",transition:"all 0.2s" }),
     sideTop:{ padding:"16px 16px 12px",background:T.sideTopBg },
     sideSection:{ padding:"12px 16px",borderBottom:`1px solid ${T.border}` },
     canvas:{ flex:1,position:"relative",overflow:"hidden",background:T.bg },
@@ -170,18 +188,18 @@ export default function App() {
     plotRow:{ padding:"8px 10px",borderRadius:6,background:T.cardBg,border:`1px solid ${T.border}`,marginBottom:4,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",transition:"all 0.15s" },
     floorCard:(sel)=>({ padding:"10px 12px",borderRadius:6,background:sel?"":T.cardBg,backgroundImage:sel?gradGold:"none",border:`1px solid ${sel?T.borderGold:T.border}`,marginBottom:5,cursor:"pointer",transition:"all 0.18s",boxShadow:sel?`0 0 14px rgba(184,150,12,0.2)`:"none" }),
     aptCard:(status,sel)=>({ padding:"9px 11px",borderRadius:6,background:sel?T.surfaceHi:T.cardBg,border:`1px solid ${sel?T.borderGold:T.border}`,marginBottom:5,cursor:"pointer",transition:"all 0.18s" }),
-    popup:{ position:"fixed",background:T.popupBg,border:`1px solid ${T.borderGold}`,borderRadius:12,padding:22,boxShadow:`0 24px 60px rgba(0,0,0,${nightMode?0.7:0.18}), 0 0 0 1px ${T.border}`,zIndex:100,minWidth:230,fontFamily:"'Montserrat',sans-serif",animation:"fadeIn 0.2s ease" },
+    popup:{ position:"fixed",background:T.popupBg,border:`1px solid ${T.borderGold}`,borderRadius:12,padding:22,boxShadow:`0 24px 60px rgba(0,0,0,${nightMode?0.7:0.18}), 0 0 0 1px ${T.border}`,zIndex:100,minWidth:230,fontFamily:"'Montserrat',sans-serif",animation:"fadeIn 0.2s ease",left:isMobile?16:"auto",right:isMobile?16:"auto",bottom:isMobile?72:"auto",...(!isMobile&&popupPos) },
     dataRow:{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:7,fontSize:12 },
     dataKey:{ color:T.textMuted,fontSize:10,letterSpacing:"0.08em" },
     dataVal:{ color:T.text,fontWeight:600,fontSize:12 },
     overlay:{ position:"absolute",top:14,right:14,display:"flex",flexDirection:"column",gap:8,zIndex:20,pointerEvents:"none" },
     overlayCard:{ background:T.overlayBg,backdropFilter:"blur(12px)",border:`1px solid ${T.border}`,borderRadius:8,padding:"8px 12px",pointerEvents:"auto",boxShadow:nightMode?"none":`0 2px 16px rgba(0,0,0,0.12)` },
     miniMap:{ width:128,height:100,background:T.miniMapBg,borderRadius:6,border:`1px solid ${T.border}`,position:"relative",overflow:"hidden" },
-    modal:{ position:"fixed",inset:0,background:nightMode?"rgba(0,0,0,0.75)":"rgba(0,0,0,0.45)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200,backdropFilter:"blur(6px)" },
-    modalBox:{ background:T.modalBg,border:`1px solid ${T.borderGold}`,borderRadius:14,padding:32,width:380,maxWidth:"90vw",boxShadow:`0 40px 100px rgba(0,0,0,0.8)`,fontFamily:"'Montserrat',sans-serif",animation:"zoomIn 0.25s ease" },
-    toast:{ position:"fixed",bottom:28,left:"50%",transform:"translateX(-50%)",background:T.toastBg,border:`1px solid ${T.borderGold}`,color:"#d4af37",padding:"13px 28px",borderRadius:50,boxShadow:`0 8px 32px rgba(184,150,12,0.4)`,fontFamily:"'Montserrat',sans-serif",fontSize:12,fontWeight:600,letterSpacing:"0.1em",zIndex:300,animation:"slideUp 0.3s ease" },
+    modal:{ position:"fixed",inset:0,background:nightMode?"rgba(0,0,0,0.75)":"rgba(0,0,0,0.45)",display:"flex",alignItems:isMobile?"flex-end":"center",justifyContent:"center",zIndex:200,backdropFilter:"blur(6px)" },
+    modalBox:{ background:T.modalBg,border:`1px solid ${T.borderGold}`,borderRadius:isMobile?"16px 16px 0 0":14,padding:32,width:isMobile?"100%":380,maxWidth:"90vw",boxShadow:`0 40px 100px rgba(0,0,0,0.8)`,fontFamily:"'Montserrat',sans-serif",animation:"zoomIn 0.25s ease" },
+    toast:{ position:"fixed",bottom:isMobile?72:28,left:"50%",transform:"translateX(-50%)",background:T.toastBg,border:`1px solid ${T.borderGold}`,color:"#d4af37",padding:"13px 28px",borderRadius:50,boxShadow:`0 8px 32px rgba(184,150,12,0.4)`,fontFamily:"'Montserrat',sans-serif",fontSize:12,fontWeight:600,letterSpacing:"0.1em",zIndex:300,animation:"slideUp 0.3s ease" },
     aptPanel:{ position:"absolute",inset:0,display:"flex",flexDirection:"column",background:T.bg,animation:"fadeIn 0.3s ease" },
-    aptPanelHeader:{ height:52,background:nightMode?"linear-gradient(90deg,#0a0900,#111000)":"linear-gradient(90deg,#fffdf5,#fff8ec)",borderBottom:`1px solid ${T.border}`,display:"flex",alignItems:"center",padding:"0 20px",gap:14,flexShrink:0 },
+    aptPanelHeader:{ height:52,background:nightMode?"linear-gradient(90deg,#0a0900,#111000)":"linear-gradient(90deg,#fffdf5,#fff8ec)",borderBottom:`1px solid ${T.border}`,display:"flex",alignItems:"center",padding:"0 20px",gap:14,flexShrink:0,flexWrap:isMobile?"wrap":"nowrap" },
     viewToggle:{ display:"flex",gap:2,background:T.cardBg,borderRadius:5,padding:2,border:`1px solid ${T.border}` },
     vBtn:(active)=>({ padding:"5px 14px",borderRadius:3,border:"none",cursor:"pointer",fontFamily:"'Montserrat',sans-serif",fontWeight:600,fontSize:9,letterSpacing:"0.1em",textTransform:"uppercase",background:active?gradGold:"transparent",color:active?"#0a0800":T.textMuted,transition:"all 0.18s" }),
     backBtn:{ background:"none",border:`1px solid ${T.border}`,borderRadius:5,color:T.textMuted,cursor:"pointer",fontFamily:"'Montserrat',sans-serif",fontSize:10,letterSpacing:"0.1em",padding:"5px 12px" },
@@ -195,25 +213,39 @@ export default function App() {
         <div style={s.logoWrap}>
           <div style={s.logoMark}>⬡</div>
           <div>
-            <div style={s.logoName}>Greenfield Estates</div>
-            <div style={s.logoSub}>Luxury Living · Est. 2024</div>
+            <div style={s.logoName}>{isMobile?"Greenfield":"Greenfield Estates"}</div>
+            <div style={{...s.logoSub,display:isMobile?"none":"block"}}>Luxury Living · Est. 2024</div>
           </div>
         </div>
-        <div style={s.tabs}>
-          {[["plots","🗺  Plot Layout"],["apartment","🏢  Apartment Tower"]].map(([key,label])=>(
-            <button key={key} style={s.tab(activeTab===key)}
-              onClick={()=>{ setActiveTab(key); setSelectedPlot(null); }}>
-              {label}
-            </button>
-          ))}
-        </div>
+        {!isMobile && (
+          <div style={s.tabs}>
+            {[["plots","🗺  Plot Layout"],["apartment","🏢  Apartment Tower"]].map(([key,label])=>(
+              <button key={key} style={s.tab(activeTab===key)}
+                onClick={()=>{ setActiveTab(key); setSelectedPlot(null); }}>
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
         <div style={s.headerRight}>
-          <button style={s.iconBtn} onClick={()=>setNightMode(n=>!n)}>
-            {nightMode?"☀  Day Mode":"🌙  Night Mode"}
+          {isMobile && (
+            <button style={{...s.iconBtn,WebkitTapHighlightColor:"transparent",touchAction:"manipulation"}} onClick={()=>setMobileDrawerOpen(true)}>
+              ☰
+            </button>
+          )}
+          <button style={{...s.iconBtn,WebkitTapHighlightColor:"transparent",touchAction:"manipulation"}} onClick={()=>setNightMode(n=>!n)}>
+            {nightMode?"☀":"🌙"}
           </button>
-          <GoldBtn T={T} small outline onClick={()=>setBookModal({item:null,type:"enquiry"})}>
-            Enquire Now
-          </GoldBtn>
+          {isMobile && (
+            <button style={{...s.iconBtn,WebkitTapHighlightColor:"transparent",touchAction:"manipulation"}} onClick={()=>setBookModal({item:null,type:"enquiry"})}>
+              ✉
+            </button>
+          )}
+          {!isMobile && (
+            <GoldBtn T={T} small outline onClick={()=>setBookModal({item:null,type:"enquiry"})}>
+              Enquire Now
+            </GoldBtn>
+          )}
         </div>
         <div style={s.headerLine}/>
       </header>
@@ -222,7 +254,7 @@ export default function App() {
       <div style={s.body}>
 
         {/* ─── SIDEBAR ─── */}
-        <aside style={s.sidebar}>
+        {!isMobile && <aside style={s.sidebar}>
           {activeTab==="plots" ? (
             <>
               <div style={s.sideTop}>
@@ -351,7 +383,98 @@ export default function App() {
               </div>
             </>
           )}
-        </aside>
+        </aside>}
+
+        {/* ─── MOBILE DRAWER ─── */}
+        {isMobile && (
+          <>
+            <div style={s.drawerBackdrop} onClick={()=>setMobileDrawerOpen(false)}/>
+            <div style={s.mobileDrawer}>
+              <div style={s.drawerHandle}/>
+              {activeTab==="plots" ? (
+                <>
+                  <div style={s.sideTop}>
+                    <SideLabel T={T}>Availability</SideLabel>
+                    <div style={s.statGrid}>
+                      {[
+                        {key:"available",label:"Available",color:STATUS_COLOR.available},
+                        {key:"sold",label:"Sold",color:STATUS_COLOR.sold},
+                        {key:"reserved",label:"Reserved",color:STATUS_COLOR.reserved},
+                      ].map(item=>(
+                        <div key={item.key} style={s.stat(item.color,plotFilter===item.key)}
+                          onClick={()=>{setPlotFilter(plotFilter===item.key?"all":item.key); setMobileDrawerOpen(false);}}>
+                          <div style={s.statN(item.color)}>{plotCounts[item.key]}</div>
+                          <div style={s.statL}>{item.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={s.filterRow}>
+                      {[["all","All"],["available","Available"],["sold","Sold"],["reserved","Reserved"]].map(([f,l])=>(
+                        <button key={f} style={{...s.fBtn(plotFilter===f,T.borderGold),WebkitTapHighlightColor:"transparent",touchAction:"manipulation"}} onClick={()=>{setPlotFilter(f); setMobileDrawerOpen(false);}}>{l}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={s.sideSection}>
+                    <SideLabel T={T}>Search</SideLabel>
+                    <input style={s.input} placeholder="Plot number..." value={searchQuery} onChange={e=>setSearchQuery(e.target.value)}/>
+                  </div>
+                  <div style={{...s.sideSection,flex:1,borderBottom:"none"}}>
+                    <SideLabel T={T}>Available ({filteredPlots.filter(p=>p.status==="available").length})</SideLabel>
+                    {filteredPlots.filter(p=>p.status==="available").map(p=>(
+                      <div key={p.id} style={{...s.plotRow,WebkitTapHighlightColor:"transparent",touchAction:"manipulation"}} onClick={()=>{ setSelectedPlot(p); setZoomPlot(p); setMobileDrawerOpen(false); }}>
+                        <div>
+                          <div style={{fontSize:12,fontWeight:600,color:T.text}}>Plot {p.id}</div>
+                          <div style={{fontSize:9,color:T.textMuted,fontFamily:"'Montserrat',sans-serif",marginTop:1}}>{p.sqft} sqft · {p.facing}</div>
+                        </div>
+                        <div style={{fontSize:11,fontWeight:700,color:"#d4af37"}}>{p.price}</div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={s.sideTop}>
+                    <SideLabel T={T}>Select Floor</SideLabel>
+                    {FLOORS.map(floor=>(
+                      <div key={floor.id} style={{...s.floorCard(selectedFloor?.id===floor.id),WebkitTapHighlightColor:"transparent",touchAction:"manipulation"}} onClick={()=>{handleFloorClick(floor); setMobileDrawerOpen(false);}}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                          <div>
+                            <div style={{fontSize:13,fontWeight:700,color:selectedFloor?.id===floor.id?"#0a0800":T.text,fontFamily:"'Cormorant Garamond',serif"}}>{floor.label}</div>
+                            <div style={{fontSize:9,color:selectedFloor?.id===floor.id?"#0a0800":T.textMuted,fontFamily:"'Montserrat',sans-serif",marginTop:2}}>{floor.type}</div>
+                          </div>
+                          <div style={{fontSize:11,fontWeight:600,color:selectedFloor?.id===floor.id?"#0a0800":T.textMuted}}>{floor.units}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {selectedFloor && (
+                    <div style={{...s.sideSection,flex:1,borderBottom:"none"}}>
+                      <SideLabel T={T}>Units on {selectedFloor.label}</SideLabel>
+                      {selectedFloor.apartments.map(apt=>(
+                        <div key={apt.id} style={{...s.aptCard(apt.status,selectedApt?.id===apt.id),WebkitTapHighlightColor:"transparent",touchAction:"manipulation"}} onClick={()=>{handleAptSelect(apt); setMobileDrawerOpen(false);}}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                            <div>
+                              <div style={{fontSize:12,fontWeight:600,color:selectedApt?.id===apt.id?"#0a0800":T.text}}>{apt.name}</div>
+                              <div style={{fontSize:9,color:selectedApt?.id===apt.id?"#0a0800":T.textMuted,fontFamily:"'Montserrat',sans-serif",marginTop:1}}>{apt.type} · {apt.area}</div>
+                            </div>
+                            <div style={{fontSize:11,fontWeight:700,color:selectedApt?.id===apt.id?"#0a0800":T.textMuted}}>{apt.price}</div>
+                          </div>
+                          <StatusBadge status={apt.status}/>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <GoldDivider T={T}/>
+                  <div style={{padding:"8px 16px"}}>
+                    <div style={{fontSize:9,color:T.textDim,fontFamily:"'Montserrat',sans-serif",letterSpacing:"0.08em",lineHeight:1.9}}>
+                      👆 CLICK FLOOR → SELECT UNIT → EXPLORE INSIDE
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </>
+        )}
 
         {/* ─── CANVAS ─── */}
         <main style={s.canvas}>
@@ -371,8 +494,13 @@ export default function App() {
                   <div style={s.aptPanelHeader}>
                     <button style={s.backBtn} onClick={()=>{ setAptView("exterior"); setSelectedRoom(null); }}>← BACK</button>
                     <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:16,color:"#d4af37",fontWeight:600}}>
-                      {selectedApt.name} &nbsp;·&nbsp; {selectedApt.type}
+                      {selectedApt.name}
                     </div>
+                    {!isMobile && (
+                      <div style={{color:T.textMuted,fontFamily:"'Montserrat',sans-serif",fontSize:11}}>
+                        &nbsp;·&nbsp; {selectedApt.type}
+                      </div>
+                    )}
                     <StatusBadge status={selectedApt.status}/>
                     <div style={{marginLeft:"auto"}}>
                       <div style={s.viewToggle}>
@@ -428,7 +556,8 @@ export default function App() {
                               color:selectedRoom.id===r.id?"#0a0800":T.textMuted,
                               border:`1px solid ${selectedRoom.id===r.id?T.borderGold:T.border}`,
                               transition:"all 0.15s",
-                            }}>{r.icon} {r.name.split(" ")[0]}</button>
+                              WebkitTapHighlightColor:"transparent",touchAction:"manipulation"
+                            }}>{isMobile?r.icon:`${r.icon} ${r.name.split(" ")[0]}`}</button>
                           ))}
                         </div>
                       </div>
@@ -471,7 +600,7 @@ export default function App() {
               <div style={s.overlayCard}>
                 <div style={{width:34,height:34,borderRadius:"50%",background:nightMode?"linear-gradient(135deg,#0a0800,#1a1200)":"linear-gradient(135deg,#fffdf0,#fff8e0)",border:`1.5px solid ${T.borderGold}`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Montserrat',sans-serif",fontWeight:700,fontSize:11,color:T.borderGold}}>N</div>
               </div>
-              {activeTab==="plots"&&(
+              {!isMobile && activeTab==="plots"&&(
                 <div style={s.overlayCard}>
                   <div style={{fontSize:8,color:T.textDim,fontFamily:"'Montserrat',sans-serif",letterSpacing:"0.15em",textTransform:"uppercase",marginBottom:5}}>Site Map</div>
                   <div style={s.miniMap}>
@@ -498,9 +627,23 @@ export default function App() {
         </main>
       </div>
 
+      {/* ══ BOTTOM TAB BAR (MOBILE) ══ */}
+      {isMobile && (
+        <div style={s.bottomTabs}>
+          <button style={{...s.bottomTab(activeTab==="plots"),WebkitTapHighlightColor:"transparent",touchAction:"manipulation"}} onClick={()=>{ setActiveTab("plots"); setSelectedPlot(null); }}>
+            <div style={{fontSize:20}}>🗺</div>
+            <div style={{fontSize:10,fontWeight:600,color:activeTab==="plots"?T.borderGold:T.textMuted,fontFamily:"'Montserrat',sans-serif",letterSpacing:"0.05em"}}>Plots</div>
+          </button>
+          <button style={{...s.bottomTab(activeTab==="apartment"),WebkitTapHighlightColor:"transparent",touchAction:"manipulation"}} onClick={()=>{ setActiveTab("apartment"); setSelectedPlot(null); }}>
+            <div style={{fontSize:20}}>🏢</div>
+            <div style={{fontSize:10,fontWeight:600,color:activeTab==="apartment"?T.borderGold:T.textMuted,fontFamily:"'Montserrat',sans-serif",letterSpacing:"0.05em"}}>Tower</div>
+          </button>
+        </div>
+      )}
+
       {/* ══ PLOT POPUP ══ */}
       {selectedPlot&&activeTab==="plots"&&(
-        <div style={{...s.popup,left:Math.min(popupPos.x+14,window.innerWidth-260),top:Math.min(popupPos.y-16,window.innerHeight-340)}}>
+        <div style={{...s.popup,...(isMobile?{left:16,right:16,bottom:72}:{left:Math.min(popupPos.x+14,window.innerWidth-260),top:Math.min(popupPos.y-16,window.innerHeight-340)})}}>
           <button onClick={()=>setSelectedPlot(null)} style={{position:"absolute",top:10,right:12,background:"none",border:"none",cursor:"pointer",color:T.textMuted,fontSize:14}}>✕</button>
           <div style={{marginBottom:12}}>
             <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,color:"#d4af37",fontWeight:600}}>Plot {selectedPlot.id}</div>

@@ -111,7 +111,7 @@ const useMobile = () => {
 export default function App() {
   const isMobile = useMobile();
   const [activeTab, setActiveTab]         = useState("plots");
-  const [nightMode, setNightMode]         = useState(true);
+  const [nightMode, setNightMode]         = useState(false);
   const [plotFilter, setPlotFilter]       = useState("all");
   const [searchQuery, setSearchQuery]     = useState("");
   const [selectedPlot, setSelectedPlot]   = useState(null);
